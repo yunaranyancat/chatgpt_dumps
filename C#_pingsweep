@@ -1,0 +1,70 @@
+using System;
+using System.Net;
+using System.Net.NetworkInformation;
+
+namespace PingSweep
+{
+  class Program
+  {
+    static void Main(string[] args)
+    {
+      // Get the current computer's IP address
+      string localIp = GetLocalIpAddress();
+
+      // Parse the IP address into its parts
+      var localIpParts = localIp.Split('.');
+
+      // Get the start and end IP addresses of the subnet to scan
+      string startIp = localIpParts[0] + "." + localIpParts[1] + "." + localIpParts[2] + ".1";
+      string endIp = localIpParts[0] + "." + localIpParts[1] + "." + localIpParts[2] + ".255";
+
+      // Parse the start and end IP addresses into integers
+      var startIpParts = startIp.Split('.');
+      var endIpParts = endIp.Split('.');
+      var startIpInt = (
+        (int.Parse(startIpParts[0]) << 24) |
+        (int.Parse(startIpParts[1]) << 16) |
+        (int.Parse(startIpParts[2]) << 8) |
+        (int.Parse(startIpParts[3]))
+      );
+      var endIpInt = (
+        (int.Parse(endIpParts[0]) << 24) |
+        (int.Parse(endIpParts[1]) << 16) |
+        (int.Parse(endIpParts[2]) << 8) |
+        (int.Parse(endIpParts[3]))
+      );
+
+      // Create a new ping sender
+      var pingSender = new Ping();
+
+      // Iterate over the range of IP addresses and send a ping to each address
+      for (var ipInt = startIpInt; ipInt <= endIpInt; ipInt++)
+      {
+        // Convert the current IP address integer back into a string
+        var ip = (ipInt >> 24) + "." + ((ipInt >> 16) & 0xff) + "." + ((ipInt >> 8) & 0xff) + "." + (ipInt & 0xff);
+
+        // Send a ping to the current IP address
+        var pingReply = pingSender.Send(ip);
+
+        // Print the status of the ping reply
+        Console.WriteLine(ip + ": " + pingReply.Status);
+      }
+    }
+
+    // Define a method to get the current computer's IP address
+    private static string GetLocalIpAddress()
+    {
+      var host = Dns.GetHostEntry(Dns.GetHostName());
+
+      foreach (var ip in host.AddressList)
+      {
+        if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+          return ip.ToString();
+        }
+      }
+
+      throw new Exception("No network adapters with an IPv4 address in the system!");
+    }
+  }
+}
