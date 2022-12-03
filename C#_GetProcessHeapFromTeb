@@ -1,0 +1,55 @@
+GetProcessHeapFromTeb is a function in the Windows API that allows a process to retrieve a handle to the process heap, which is a memory area that is used to store dynamically allocated memory. This function can be used for malicious purposes because it allows an attacker to manipulate the process heap, potentially disrupting the operation of the process or allowing the attacker to inject their own code into the process.
+
+To use GetProcessHeapFromTeb for malicious purposes, an attacker would first need to gain access to the legitimate process that they want to manipulate. They could then use the GetProcessHeapFromTeb function to retrieve a handle to the process heap, and then use the various functions in the Windows API that allow manipulation of the heap, such as HeapAlloc and HeapFree, to modify the memory in the heap.
+
+Depending on how the process uses the heap, the attacker could use these functions to cause the process to crash, or to allocate memory in the heap that is controlled by the attacker. This could allow the attacker to inject their own code into the process, potentially allowing them to execute their own commands or perform other malicious actions within the context of the legitimate process.
+
+Overall, GetProcessHeapFromTeb can be used for malicious purposes because it allows an attacker to manipulate the memory in the process heap, potentially disrupting the operation of the process or allowing the attacker to inject their own code into the process. This can allow the attacker to execute their own commands or perform other malicious actions within the context of the legitimate process.
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace MaliciousCode
+{
+    class Program
+    {
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetProcessHeapFromTeb();
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr HeapAlloc(IntPtr hHeap, uint dwFlags, IntPtr dwBytes);
+
+        [DllImport("kernel32.dll")]
+        static extern bool HeapFree(IntPtr hHeap, uint dwFlags, IntPtr lpMem);
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr VirtualProtect(IntPtr lpAddress, IntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+
+        static void Main(string[] args)
+        {
+            // Get a handle to the process heap
+            IntPtr hHeap = GetProcessHeapFromTeb();
+
+            // Allocate memory in the heap
+            IntPtr pMemory = HeapAlloc(hHeap, 0, (IntPtr)1024);
+
+            // Make the allocated memory writable
+            uint oldProtection;
+            VirtualProtect(pMemory, (IntPtr)1024, 0x40, out oldProtection);
+
+            // Write your code into the allocated memory
+            byte[] code = { 0xB8, 0x04, 0x00, 0x00, 0x00, 0xC3 }; // mov eax, 4; ret
+            Marshal.Copy(code, 0, pMemory, code.Length);
+
+            // Make the allocated memory executable
+            VirtualProtect(pMemory, (IntPtr)1024, 0x20, out oldProtection);
+
+            // Execute the code in the allocated memory
+            IntPtr pCode = Marshal.GetDelegateForFunctionPointer(pMemory, typeof(Action)) as Action;
+            pCode();
+
+            // Free the allocated memory
+            HeapFree(hHeap, 0, pMemory);
+        }
+    }
+}
