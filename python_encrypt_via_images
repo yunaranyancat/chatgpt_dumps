@@ -1,0 +1,76 @@
+import os
+import random
+import sys
+
+# Image encrypter/decrypter class
+class ImageCrypto:
+    # Encrypts the file by replacing its bytes with the corresponding
+    # pixel values from the given images.
+    def encrypt(self, file_path, images):
+        # Read the file into memory
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        
+        # Create a new file to store the encrypted data
+        encrypted_file_path = os.path.splitext(file_path)[0] + '_encrypted.bin'
+        with open(encrypted_file_path, 'wb') as f:
+            # Replace each byte of the file with the corresponding pixel
+            # value from the images
+            for byte in data:
+                # Choose a random image from the list
+                image = random.choice(images)
+                # Get the next pixel value from the image
+                pixel = image.getpixel((0, 0))
+                # Write the pixel value to the encrypted file
+                f.write(pixel.to_bytes(1, byteorder='big'))
+        
+        # Return the path of the encrypted file
+        return encrypted_file_path
+    
+    # Decrypts the file by replacing its pixels with the corresponding
+    # bytes from the original file.
+    def decrypt(self, file_path, images):
+        # Read the encrypted file into memory
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        
+        # Create a new file to store the decrypted data
+        decrypted_file_path = os.path.splitext(file_path)[0] + '_decrypted.bin'
+        with open(decrypted_file_path, 'wb') as f:
+            # Replace each pixel in the file with the corresponding byte
+            # from the original file
+            for i in range(0, len(data), 3):
+                # Choose a random image from the list
+                image = random.choice(images)
+                # Get the next pixel value from the image
+                pixel = image.getpixel((0, 0))
+                # Write the corresponding byte from the original file
+                # to the decrypted file
+                f.write(data[i:i+3].to_bytes(1, byteorder='big'))
+        
+        # Return the path of the decrypted file
+        return decrypted_file_path
+
+# Example usage
+
+# Import the Image module from the Pillow library
+from PIL import Image
+
+# Check if the required arguments are provided
+if len(sys.argv) < 3:
+    print('Usage: python script.py <file> <image1> <image2> ...')
+    sys.exit(1)
+
+# Load the images to be used for encryption/decryption
+file_path = sys.argv[1]
+image_paths = sys.argv[2:]
+images = [Image.open(path) for path in image_paths]
+
+# Create an instance of the ImageCrypto class
+crypto = ImageCrypto()
+
+# Encrypt the file
+encrypted_file = crypto.encrypt(file_path, images)
+
+# Decrypt the file
+decrypted_file = crypto.decrypt(encrypted_file
