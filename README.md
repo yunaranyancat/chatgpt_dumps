@@ -1,6 +1,6 @@
 ## Description :
 
-A collection of code snippets powered by [ChatGPT OpenAI](https://openai.com/blog/chatgpt/).
+A collection of code snippets and answers powered by [ChatGPT OpenAI](https://openai.com/blog/chatgpt/).
 
 ## Disclaimer :
 
