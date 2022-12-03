@@ -1,0 +1,26 @@
+#include <iostream>
+#include <thread>
+
+int shared_counter = 0;
+
+void increment_counter()
+{
+    // Increment the shared counter
+    shared_counter++;
+
+    // Print the value of the counter
+    std::cout << "Counter value: " << shared_counter << std::endl;
+}
+
+int main()
+{
+    // Create two threads that will concurrently increment the shared counter
+    std::thread thread1(increment_counter);
+    std::thread thread2(increment_counter);
+
+    // Wait for the threads to finish
+    thread1.join();
+    thread2.join();
+
+    return 0;
+}
