@@ -8,7 +8,6 @@ int main()
 std::string clipboardData;
 DWORD result = OleGetClipboardDataA(clipboardData);
 
-Copy code
 if (result != ERROR_SUCCESS)
 {
     std::cout << "Failed to get clipboard data with error code: " << result << std::endl;
