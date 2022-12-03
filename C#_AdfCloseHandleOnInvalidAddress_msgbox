@@ -1,0 +1,29 @@
+using System;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+
+namespace AntiDebugExample
+{
+    class Program
+    {
+        [DllImport("Win32Helper.h")]
+        static extern bool AdfCloseHandleOnInvalidAddress();
+
+        static void Main(string[] args)
+        {
+            // Protect the process from being debugged
+            bool result = AdfCloseHandleOnInvalidAddress();
+
+            if (result)
+            {
+                // The handle to the process was closed successfully
+                MessageBox.Show("Don't debug me pls.", "Warning");
+            }
+            else
+            {
+                // There was an error closing the handle to the process
+                MessageBox.Show("Gotcha.", "Success");
+            }
+        }
+    }
+}
