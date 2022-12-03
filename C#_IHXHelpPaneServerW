@@ -1,0 +1,73 @@
+using System;
+using System.Runtime.InteropServices;
+
+[ComImport]
+[Guid("8cec592c-07a1-11d9-b15e-000d56bfe6ee")]
+public interface IHxHelpPaneServer
+{
+    [PreserveSig]
+    int DisplayTask([MarshalAs(UnmanagedType.LPWStr)]string task);
+    [PreserveSig]
+    int DisplayContents([MarshalAs(UnmanagedType.LPWStr)]string contents);
+    [PreserveSig]
+    int DisplaySearchResults([MarshalAs(UnmanagedType.LPWStr)]string searchResults);
+    [PreserveSig]
+    int Execute([MarshalAs(UnmanagedType.LPWStr)]string command);
+}
+
+public static class Win32Helper
+{
+    [DllImport("ole32.dll")]
+    public static extern int CoInitializeEx(IntPtr pvReserved, uint dwCoInit);
+
+    [DllImport("ole32.dll")]
+    public static extern int CoUninitialize();
+
+    [DllImport("ole32.dll")]
+    public static extern int CLSIDFromString(
+        [MarshalAs(UnmanagedType.LPWStr)]string lpsz,
+        out Guid pclsid);
+
+    [DllImport("ole32.dll")]
+    public static extern int CoCreateInstance(
+        [MarshalAs(UnmanagedType.LPStruct)]Guid rclsid,
+        IntPtr pUnkOuter,
+        uint dwClsContext,
+        [MarshalAs(UnmanagedType.LPStruct)]Guid riid,
+        out IHxHelpPaneServer ppv);
+
+    public static int CreateProcessFromIHxHelpPaneServerW(string fileName)
+    {
+        int result = 0;
+        Guid clsid;
+        Guid iid;
+        IHxHelpPaneServer help = null;
+
+        result = CLSIDFromString("{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}", out clsid);
+        if (result != 0) return result;
+
+        result = CLSIDFromString("{8cec592c-07a1-11d9-b15e-000d56bfe6ee}", out iid);
+        if (result != 0) return result;
+
+        result = CoInitializeEx(IntPtr.Zero, 1);
+        if (result != 0) return result;
+
+        result = CoCreateInstance(clsid, IntPtr.Zero, 1, iid, out help);
+        if (result != 0)
+        {
+            CoUninitialize();
+            return result;
+        }
+
+        result = help.Execute(fileName);
+
+        if (help != null)
+        {
+            Marshal.FinalReleaseComObject(help);
+        }
+
+        CoUninitialize();
+
+        return result;
+    }
+}
