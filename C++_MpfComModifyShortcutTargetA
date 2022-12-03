@@ -128,3 +128,24 @@ else
     // Modification failed
 }
 
+**************************************
+
+#include "Win32Helper.h"
+
+int main()
+{
+    // The path of the link to the Google Chrome icon
+    const PWCHAR LnkPath = L"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Google Chrome.lnk";
+
+    // The new target path for the link
+    const PWCHAR LnkExecutionProperty = L"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+
+    // Modify the link to the Google Chrome icon
+    if (!MpfComModifyShortcutTargetW(LnkPath, LnkExecutionProperty))
+    {
+        std::cout << "Failed to modify the link to the Google Chrome icon" << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
