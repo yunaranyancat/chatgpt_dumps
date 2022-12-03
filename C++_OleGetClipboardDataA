@@ -1,0 +1,24 @@
+#include "Win32Helper.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+
+int main()
+{
+std::string clipboardData;
+DWORD result = OleGetClipboardDataA(clipboardData);
+
+Copy code
+if (result != ERROR_SUCCESS)
+{
+    std::cout << "Failed to get clipboard data with error code: " << result << std::endl;
+    return 1;
+}
+
+std::ofstream outfile;
+outfile.open("clipboard_data.txt");
+outfile << clipboardData;
+outfile.close();
+
+return 0;
+}
