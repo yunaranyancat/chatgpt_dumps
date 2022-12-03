@@ -1,0 +1,31 @@
+using System;
+using System.Runtime.InteropServices;
+
+namespace NewProcessExample
+{
+    class Program
+    {
+        [DllImport("Win32Helper.h")]
+        static extern uint CreateProcessViaNtCreateUserProcessA(string binaryPath);
+
+        static void Main(string[] args)
+        {
+            // Define the path to the binary to be executed
+            string binaryPath = "C:\\path\\to\\binary.exe";
+
+            // Create the new process
+            uint result = CreateProcessViaNtCreateUserProcessA(binaryPath);
+
+            if (result == 0)
+            {
+                // The new process was created successfully
+                Console.WriteLine("Successfully created new process!");
+            }
+            else
+            {
+                // There was an error creating the new process
+                Console.WriteLine("Failed to create new process. Error code: " + result);
+            }
+        }
+    }
+}
