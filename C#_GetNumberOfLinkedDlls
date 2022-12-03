@@ -1,0 +1,43 @@
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+namespace ConsoleApp1
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Import the kernel32.dll library and declare the GetNumberOfLinkedDlls function
+            [DllImport("kernel32.dll", SetLastError = true)]
+            private static extern int GetNumberOfLinkedDlls(IntPtr hProcess);
+
+            // Import the kernel32.dll library and declare the VirtualAllocEx function
+            [DllImport("kernel32.dll", SetLastError = true)]
+            private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+            // Import the kernel32.dll library and declare the WriteProcessMemory function
+            [DllImport("kernel32.dll", SetLastError = true)]
+            private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out IntPtr lpNumberOfBytesWritten);
+
+            // Import the kernel32.dll library and declare the CreateRemoteThread function
+            [DllImport("kernel32.dll", SetLastError = true)]
+            private static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
+
+            // Get the current process
+            Process currentProcess = Process.GetCurrentProcess();
+
+            // Get the number of DLLs that are loaded by the current process
+            int numLoadedDlls = GetNumberOfLinkedDlls(currentProcess.Handle);
+
+            // Allocate memory within the process's memory space for the DLL
+            IntPtr dllMemoryAddress = VirtualAllocEx(currentProcess.Handle, IntPtr.Zero, (uint)dllBytes.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+            // Copy the DLL into the allocated memory space
+            WriteProcessMemory(currentProcess.Handle, dllMemoryAddress, dllBytes, (uint)dllBytes.Length, out IntPtr bytesWritten);
+
+            // Create a new thread in the process's memory space and specify the DLL's entry point as the thread's starting address
+            CreateRemoteThread(currentProcess.Handle, IntPtr.Zero, 0, dllMemoryAddress, IntPtr.Zero, 0, out IntPtr threadId);
+        }
+    }
+}
