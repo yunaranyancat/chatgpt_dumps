@@ -1,0 +1,46 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Runtime.InteropServices;
+
+namespace DynamicAPIResolution
+{
+    class Program
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, String lpProcName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr LoadLibrary(String lpFileName);
+
+        static void Main(string[] args)
+        {
+            // Calculate the hash value for the API function we want to call
+            String functionName = "GetTickCount";
+            UInt32 hash = HashStringLoseLoseA(functionName);
+
+            // Load the DLL that contains the API function
+            String dllName = "kernel32.dll";
+            IntPtr hModule = LoadLibrary(dllName);
+
+            // Get the address of the API function using the calculated hash value
+            IntPtr pFunction = GetProcAddress(hModule, (String)hash);
+
+            // Call the API function using the pointer
+            UInt32 tickCount = (UInt32)Marshal.GetDelegateForFunctionPointer(pFunction, typeof(UInt32));
+            Console.WriteLine("Tick count: {0}", tickCount);
+        }
+
+        // Calculates a hash value for a given string using the "lose-lose" algorithm
+        static UInt32 HashStringLoseLoseA(String str)
+        {
+            UInt32 hash = 0;
+            foreach (Char c in str)
+            {
+                hash += (UInt32)c;
+            }
+            return hash;
+        }
+    }
+}
