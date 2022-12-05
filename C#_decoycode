@@ -1,0 +1,30 @@
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
+namespace DecoyCode
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Create a dynamic assembly with the ".hehe" memory section
+            AssemblyName assemblyName = new AssemblyName("DecoyCodeAssembly");
+            AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+            ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("DecoyCodeModule");
+            TypeBuilder typeBuilder = moduleBuilder.DefineType("DecoyCodeType", TypeAttributes.Public);
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod("DecoyCodeMethod", MethodAttributes.Public | MethodAttributes.Static);
+
+            // Write the decoy code
+            ILGenerator ilGenerator = methodBuilder.GetILGenerator();
+            ilGenerator.EmitWriteLine("This is the decoy code in the '.hehe' section");
+
+            // Create and execute the decoy code
+            Type decoyCodeType = typeBuilder.CreateType();
+            decoyCodeType.GetMethod("DecoyCodeMethod").Invoke(null, null);
+
+            // Write the main code
+            Console.WriteLine("This is the main code in the main memory section");
+        }
+    }
+}
