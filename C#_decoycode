@@ -28,3 +28,37 @@ namespace DecoyCode
         }
     }
 }
+
+
+************************************************************************************
+
+using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Reflection.Emit;
+
+namespace DecoyCode
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Create a dynamic assembly with the ".hehe" memory section
+            AssemblyName assemblyName = new AssemblyName("DecoyCodeAssembly");
+            AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+            ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("DecoyCodeModule");
+            TypeBuilder typeBuilder = moduleBuilder.DefineType("DecoyCodeType", TypeAttributes.Public);
+            MethodBuilder methodBuilder = typeBuilder.DefineMethod("DecoyCodeMethod", MethodAttributes.Public | MethodAttributes.Static);
+
+            // Write the decoy code
+            ILGenerator ilGenerator = methodBuilder.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ldstr, "calc.exe");
+            ilGenerator.Emit(OpCodes.Call, typeof(Process).GetMethod("Start", new Type[] { typeof(string) }));
+
+            // Create and execute the decoy code
+            Type decoyCodeType = typeBuilder.CreateType();
+            decoyCodeType.GetMethod("DecoyCodeMethod").Invoke(null, null);
+
+            // Write the main code
+            Process.Start("notepad.exe");
+        }
