@@ -21,3 +21,25 @@ outfile.close();
 
 return 0;
 }
+
+*******************************************
+
+// Check if the clipboard contains data before calling OleGetClipboardDataA
+if (IsClipboardFormatAvailable(CF_TEXT))
+{
+    // Call OleGetClipboardDataA here
+}
+
+...
+
+// This method will be called whenever the clipboard data changes
+void ClipboardChangedHandler(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    // Call OleGetClipboardDataA here
+}
+
+...
+
+// Register for the ClipboardChanged event
+SetClipboardViewer(ClipboardChangedHandler);
+
