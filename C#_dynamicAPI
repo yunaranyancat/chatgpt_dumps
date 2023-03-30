@@ -1,0 +1,56 @@
+using System;
+using System.Runtime.InteropServices;
+
+public class MessageBoxDemo
+{
+    // P/Invoke declaration for the MessageBox function
+    [DllImport("user32.dll", EntryPoint = "MessageBoxA")]
+    static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
+
+    public static void Main()
+    {
+        // Display a message box using the MessageBox function
+        MessageBox(IntPtr.Zero, "meow", "Hello", 0);
+    }
+}
+
+
+###########################################
+
+using System;
+using System.Reflection;
+using System.Runtime.InteropServices;
+
+public class DynamicAPIHashingDemo
+{
+    public static void Main()
+    {
+        // Obfuscate the function name using dynamic API hashing
+        byte[] bytes = new byte[] { 0x0F, 0xC7, 0xC8, 0x87, 0x08, 0xC4, 0x4A, 0xD7, 0x86, 0x2E, 0x8C, 0x4C, 0x4B, 0xD7, 0x86, 0x36 };
+        string functionName = DecryptFunctionName(bytes);
+
+        // Call the obfuscated function
+        CallFunction(functionName);
+    }
+
+    // Decrypts the obfuscated function name using dynamic API hashing
+    static string DecryptFunctionName(byte[] bytes)
+    {
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            bytes[i] ^= 0xA5;
+        }
+
+        return System.Text.Encoding.ASCII.GetString(bytes);
+    }
+
+    // Calls the specified function using reflection
+    static void CallFunction(string functionName)
+    {
+        Type type = Type.GetType("System.Windows.Forms.MessageBox");
+        var method = type.GetMethod(functionName);
+        method.Invoke(null, new object[] { "meow", "Hello" });
+    }
+}
+
+
