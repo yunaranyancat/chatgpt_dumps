@@ -44,3 +44,45 @@ namespace DynamicAPIResolution
         }
     }
 }
+
+#######################################################################
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Runtime.InteropServices;
+
+namespace DynamicAPIResolution
+{
+    class Program
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, String lpProcName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr LoadLibrary(String lpFileName);
+
+        delegate int MessageBoxDelegate(IntPtr hWnd, string lpText, string lpCaption, uint uType);
+
+        static void Main(string[] args)
+        {
+            // Load the DLL that contains the MessageBox API function
+            String dllName = "user32.dll";
+            IntPtr hModule = LoadLibrary(dllName);
+
+            // Get the address of the MessageBox API function
+            String lpProcName = "MessageBoxW";
+            IntPtr pFunction = GetProcAddress(hModule, lpProcName);
+
+            // Create a delegate for the MessageBox API function
+            MessageBoxDelegate MessageBox = (MessageBoxDelegate)Marshal.GetDelegateForFunctionPointer(pFunction, typeof(MessageBoxDelegate));
+
+            // Call the MessageBox API function using the delegate
+            int result = MessageBox(IntPtr.Zero, "Meow", "MeowBox", 0);
+
+            Console.WriteLine("MessageBox result: {0}", result);
+        }
+    }
+}
+
