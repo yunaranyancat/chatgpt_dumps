@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+
+namespace LoseLoseHashCollision
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            List<string> testStrings = new List<string>
+            {
+                "AB", "BA", "Meow", "woeM", "Hash", "sahH"
+            };
+
+            Dictionary<uint, string> hashTable = new Dictionary<uint, string>();
+
+            Console.WriteLine("Testing lose-lose hash algorithm for collisions:");
+            foreach (string str in testStrings)
+            {
+                uint hash = HashStringLoseLose(str);
+
+                Console.WriteLine("String: {0}, Hash: {1}", str, hash);
+
+                if (hashTable.ContainsKey(hash))
+                {
+                    Console.WriteLine("Collision found for strings \"{0}\" and \"{1}\" with hash {2}", hashTable[hash], str, hash);
+                }
+                else
+                {
+                    hashTable.Add(hash, str);
+                }
+            }
+        }
+
+        static uint HashStringLoseLose(string str)
+        {
+            uint hash = 0;
+            foreach (char c in str)
+            {
+                hash += (uint)c;
+            }
+            return hash;
+        }
+    }
+}
