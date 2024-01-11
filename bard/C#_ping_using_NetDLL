@@ -1,0 +1,33 @@
+using System;
+using System.Net.NetworkInformation;
+using System.Windows.Forms;  // Add this for message boxes
+
+namespace PingExample
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string ipAddress = "192.168.1.100"; // Replace with the IP address you want to ping
+
+            try
+            {
+                Ping pinger = new Ping();
+                PingReply reply = pinger.Send(ipAddress);
+
+                if (reply.Status == IPStatus.Success)
+                {
+                    MessageBox.Show("Host is reachable!", "Ping Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Host is unreachable.", "Ping Result", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (PingException ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Ping Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}
