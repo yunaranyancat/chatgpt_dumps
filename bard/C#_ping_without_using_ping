@@ -1,0 +1,327 @@
+using System;
+using System.Runtime.InteropServices;
+
+namespace Win32Icmp
+{
+    public static class IcmpHelper
+    {
+        [DllImport("icmp.dll", SetLastError = true)]
+        private static extern IntPtr IcmpCreateFile();
+
+        [DllImport("icmp.dll", SetLastError = true)]
+        private static extern bool IcmpCloseHandle(IntPtr handle);
+
+        [DllImport("icmp.dll", SetLastError = true)]
+        private static extern int IcmpSendEcho(
+            IntPtr handle,
+            int destinationAddress,
+            byte[] requestData,
+            int requestSize,
+            IntPtr requestOptions,
+            byte[] replyBuffer,
+            int replySize,
+            int timeout);
+
+        [DllImport("Win32Helper.dll")] // Assuming this contains ConvertIPv4StringToUnsignedLongW
+        private static extern uint ConvertIPv4StringToUnsignedLongW(string ipAddress);
+
+        [DllImport("Win32Helper.dll")] // Assuming this contains ConvertIPv4IpAddressStructureToStringW
+        private static extern void ConvertIPv4IpAddressStructureToStringW(in_addr address, StringBuilder addressString);
+
+        public static bool SendIcmpEchoMessageToIPv4HostW(
+            string ipAddress,
+            out int status,
+            out int roundTripTime,
+            out string echoReplyAddress)
+        {
+            IntPtr icmpHandle = IntPtr.Zero;
+            uint ipAddressValue = 0;
+            bool success = false;
+            byte[] icmpMessage = Encoding.ASCII.GetBytes("Message");
+            byte[] icmpResponseMessage = null;
+            int replySize = 0;
+
+            try
+            {
+                if (ipAddress == null)
+                {
+                    return false;
+                }
+
+                ipAddressValue = ConvertIPv4StringToUnsignedLongW(ipAddress);
+                if (ipAddressValue == 0)
+                {
+                    return false;
+                }
+
+                icmpHandle = IcmpCreateFile();
+                if (icmpHandle == IntPtr.Zero)
+                {
+                    return false;
+                }
+
+                replySize = Marshal.SizeOf(typeof(ICMP_ECHO_REPLY)) + icmpMessage.Length;
+                icmpResponseMessage = new byte[replySize];
+
+                if (IcmpSendEcho(icmpHandle, (int)ipAddressValue, icmpMessage, icmpMessage.Length, IntPtr.Zero, icmpResponseMessage, replySize, 1000))
+                {
+                    ICMP_ECHO_REPLY echoReply = (ICMP_ECHO_REPLY)Marshal.PtrToStructure(Marshal.UnsafeAddrOfPinnedArrayElement(icmpResponseMessage, 0), typeof(ICMP_ECHO_REPLY));
+
+                    status = echoReply.Status;
+                    roundTripTime = echoReply.RoundTripTime;
+
+                    in_addr replyAddress = new in_addr();
+                    replyAddress.S_addr = echoReply.Address;
+                    StringBuilder replyAddressString = new StringBuilder(32);
+                    ConvertIPv4IpAddressStructureToStringW(replyAddress, replyAddressString);
+                    echoReplyAddress = replyAddressString.ToString();
+
+                    success = true;
+                }
+            }
+            finally
+            {
+                if (icmpHandle != IntPtr.Zero)
+                {
+                    IcmpCloseHandle(icmpHandle);
+                }
+            }
+
+            return success;
+        }
+
+        // Define the ICMP_ECHO_REPLY structure
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ICMP_ECHO_REPLY
+        {
+            public int Status;
+            public int RoundTripTime;
+            public int DataSize;
+            public int Reserved;
+            public int Address;
+            public byte[] Data; // Size determined by DataSize
+        }
+    }
+}
+
+
+
+
+
+
+---------------------------------------------
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace Win32Icmp
+{
+    public static class IcmpHelper
+    {
+        // ... other code from previous response ...
+
+        [DllImport("ntdll.dll")]
+        private static extern uint RtlIpv4StringToAddressW(
+            string ipAddress,
+            bool strict,
+            ref IntPtr terminator,
+            out in_addr address);
+
+        [DllImport("ntdll.dll")]
+        private static extern bool RtlIpv4AddressToStringW(
+            in_addr address,
+            StringBuilder buffer);
+
+        public static uint ConvertIPv4StringToUnsignedLongW(string ipAddress)
+        {
+            IntPtr terminator = IntPtr.Zero;
+            in_addr address = new in_addr();
+
+            if (RtlIpv4StringToAddressW(ipAddress, false, ref terminator, out address) == 0)
+            {
+                return 0; // Error
+            }
+
+            return address.S_addr;
+        }
+
+        public static bool ConvertIPv4IpAddressStructureToStringW(in_addr address, StringBuilder buffer)
+        {
+            if (buffer == null)
+            {
+                return false;
+            }
+
+            return RtlIpv4AddressToStringW(address, buffer);
+        }
+    }
+}
+
+----------------------------------------------------------------
+
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace Win32Icmp
+{
+    public static class IcmpHelper
+    {
+        [DllImport("icmp.dll", SetLastError = true)]
+        private static extern IntPtr IcmpCreateFile();
+
+        [DllImport("icmp.dll", SetLastError = true)]
+        private static extern bool IcmpCloseHandle(IntPtr handle);
+
+        [DllImport("icmp.dll", SetLastError = true)]
+        private static extern int IcmpSendEcho(
+            IntPtr handle,
+            int destinationAddress,
+            byte[] requestData,
+            int requestSize,
+            IntPtr requestOptions,
+            byte[] replyBuffer,
+            int replySize,
+            int timeout);
+
+        [DllImport("ntdll.dll")]
+        private static extern uint RtlIpv4StringToAddressW(
+            string ipAddress,
+            bool strict,
+            ref IntPtr terminator,
+            out in_addr address);
+
+        [DllImport("ntdll.dll")]
+        private static extern bool RtlIpv4AddressToStringW(
+            in_addr address,
+            StringBuilder buffer);
+
+        public static bool SendIcmpEchoMessageToIPv4HostW(
+            string ipAddress,
+            out int status,
+            out int roundTripTime,
+            out string echoReplyAddress)
+        {
+            // ... rest of the SendIcmpEchoMessageToIPv4HostW implementation ...
+        }
+
+        // Define the ICMP_ECHO_REPLY structure
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ICMP_ECHO_REPLY
+        {
+            public int Status;
+            public int RoundTripTime;
+            public int DataSize;
+            public int Reserved;
+            public int Address;
+            public byte[] Data; // Size determined by DataSize
+        }
+
+        public static uint ConvertIPv4StringToUnsignedLongW(string ipAddress)
+        {
+            // ... implementation of ConvertIPv4StringToUnsignedLongW ...
+        }
+
+        public static bool ConvertIPv4IpAddressStructureToStringW(in_addr address, StringBuilder buffer)
+        {
+            // ... implementation of ConvertIPv4IpAddressStructureToStringW ...
+        }
+    }
+}
+
+
+------------------------------------------------------------------------
+
+using System;
+using Win32Icmp;
+
+// You might need to add Win32Icmp namespace using using Win32Icmp; based on your project structure
+
+public class Example
+{
+    public static void Main(string[] args)
+    {
+        // Define variables for response parameters
+        int status = 0;
+        int roundTripTime = 0;
+        string echoReplyAddress = null;
+
+        // Ping the IP address
+        if (IcmpHelper.SendIcmpEchoMessageToIPv4HostW("1.2.3.4", out status, out roundTripTime, out echoReplyAddress))
+        {
+            if (status == 0) // Check if ping was successful
+            {
+                Console.WriteLine("Ping successful!");
+                Console.WriteLine($"Round trip time: {roundTripTime} ms");
+                Console.WriteLine($"Reply address: {echoReplyAddress}");
+
+                // First if condition based on success
+                if (roundTripTime < 50)
+                {
+                    Console.WriteLine("Excellent response time!");
+                }
+                else if (roundTripTime < 100)
+                {
+                    Console.WriteLine("Good response time.");
+                }
+                else
+                {
+                    Console.WriteLine("High response time, please investigate.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Ping failed, error code: {0}", status);
+            }
+        }
+        else
+        {
+            Console.WriteLine("Error sending ping request.");
+        }
+    }
+}
+
+----------------------------------------------------------------------------------
+
+
+using System;
+using Win32Icmp;
+
+// You might need to add Win32Icmp namespace using using Win32Icmp; based on your project structure
+
+public class Example
+{
+    public static void Main(string[] args)
+    {
+        // Define variables for response parameters
+        int status = 0;
+        int roundTripTime = 0;
+        string echoReplyAddress = null;
+
+        // Ping the IP address
+        if (IcmpHelper.SendIcmpEchoMessageToIPv4HostW("1.2.3.4", out status, out roundTripTime, out echoReplyAddress))
+        {
+            if (status == 0) // Check if ping was successful
+            {
+                Console.WriteLine("Ping successful!");
+                Console.WriteLine($"Round trip time: {roundTripTime} ms");
+                Console.WriteLine($"Reply address: {echoReplyAddress}");
+            }
+            else
+            {
+                Console.WriteLine("Host is unreachable.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Error sending ping request.");
+        }
+    }
+}
+
+
+
+
+
+
+
